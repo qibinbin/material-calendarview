@@ -11,7 +11,7 @@ and feel, rather than 100% parity with the platform's implementation.
 Usage
 -----
 
-1. Add `compile 'com.prolificinteractive:material-calendarview:0.2.2'` to your dependencies.
+1. Add `compile 'com.prolificinteractive:material-calendarview:0.2.4'` to your dependencies.
 2. Add `MaterialCalendarView` into your layouts or view hierarchy.
 3. Set a `OnDateChangedListener` or call `MaterialCalendarView.getSelectedDate()` when you need it.
 
@@ -32,6 +32,8 @@ available.
     app:headerTextAppearance="style"
     app:dateTextAppearance="style"
     app:weekDayTextAppearance="style"
+    app:weekDayLabels="array"
+    app:monthLabels="array"
     />
 ```
 
@@ -61,6 +63,16 @@ Override the text appearance of the week day indicators.
 ### dateTextAppearance
 
 Override the text appearance of the dates.
+
+### weekDayLabels
+
+Supply custom labels for the days of the week. This sets an `ArrayWeekDayFormatter` on the `CalendarView`.
+The default uses Java's `Calendar` class to get a `SHORT` display name.
+
+### monthLabels
+
+Supply custom labels for the months of the year. This sets a `MonthArrayTitleFormatter` on the `CalendarView`.
+The default implementation formats using `SimpleDateFormat` with a `"MMMM yyyy"` format.
 
 Contributing
 ============
