@@ -5,7 +5,9 @@ apply plugin: 'signing'
 android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
-
+      lintOptions {
+          abortOnError false
+      }
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
@@ -28,7 +30,16 @@ artifacts {
 }
 
 signing {
-  sign configurations.archives
+   required { gradle.taskGraph.hasTask("uploadArchives") }
+   sign configurations.archives
+}
+
+def getRepositoryUsername() {
+  return hasProperty('sonatypeUsername') ? sonatypeUsername : ""
+}
+
+def getRepositoryPassword() {
+  return hasProperty('sonatypePassword') ? sonatypePassword : ""
 }
 
 uploadArchives {
@@ -36,11 +47,11 @@ uploadArchives {
     beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
     repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-      authentication(userName: sonatypeUsername, password: sonatypePassword)
+      authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
     }
 
     snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-      authentication(userName: sonatypeUsername, password: sonatypePassword)
+      authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
     }
 
     pom.groupId = GROUP

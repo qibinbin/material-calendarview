@@ -1,14 +1,14 @@
 package com.prolificinteractive.materialcalendarview;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.View;
-import android.widget.GridLayout;
+import android.widget.LinearLayout;
 
 import com.prolificinteractive.materialcalendarview.format.WeekDayFormatter;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import static java.util.Calendar.DATE;
 import static java.util.Calendar.DAY_OF_WEEK;
@@ -18,11 +18,15 @@ import static java.util.Calendar.SUNDAY;
  * Display a month of {@linkplain DayView}s and
  * seven {@linkplain WeekDayView}s.
  */
-class MonthView extends GridLayout implements View.OnClickListener {
+class MonthView extends LinearLayout implements View.OnClickListener {
 
-    public static interface Callbacks {
+    protected static final int DEFAULT_DAYS_IN_WEEK = 7;
+    protected static final int DEFAULT_MAX_WEEKS = 6;
+    protected static final int DEFAULT_MONTH_TILE_HEIGHT = DEFAULT_MAX_WEEKS + 1;
 
-        public void onDateChanged(CalendarDay date);
+    public interface Callbacks {
+
+        void onDateChanged(CalendarDay date);
     }
 
     private Callbacks callbacks;
@@ -40,36 +44,48 @@ class MonthView extends GridLayout implements View.OnClickListener {
 
     private boolean showOtherDates = false;
 
+    private List<DayViewDecorator> dayViewDecorators;
+
+
     public MonthView(Context context) {
-        this(context, null);
-    }
+        super(context);
 
-    public MonthView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-
-        setColumnCount(7);
-        setRowCount(7);
+        setOrientation(VERTICAL);
 
         setClipChildren(false);
         setClipToPadding(false);
-    }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-
-        int children = getChildCount();
-        for(int i = 0; i < children; i++) {
-            View child = getChildAt(i);
-            if(child instanceof WeekDayView) {
-                weekDayViews.add((WeekDayView) child);
-            } else if(child instanceof DayView) {
-                monthDayViews.add((DayView) child);
-                child.setOnClickListener(this);
+        LinearLayout row = makeRow(this);
+        for (int i = 0; i < DEFAULT_DAYS_IN_WEEK; i++) {
+            WeekDayView weekDayView = new WeekDayView(context);
+            weekDayViews.add(weekDayView);
+            row.addView(weekDayView, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
+        }
+        for(int r = 0; r < DEFAULT_MAX_WEEKS; r++) {
+            row = makeRow(this);
+            for(int i = 0; i < DEFAULT_DAYS_IN_WEEK; i++) {
+                DayView dayView = new DayView(context);
+                dayView.setOnClickListener(this);
+                monthDayViews.add(dayView);
+                row.addView(dayView, new LayoutParams(0, LayoutParams.MATCH_PARENT, 1f));
             }
         }
+
         setFirstDayOfWeek(firstDayOfWeek);
         setSelectedDate(new CalendarDay());
+    }
+
+
+    public void setDayViewDecorators(List<DayViewDecorator> dayViewDecorators) {
+        this.dayViewDecorators = dayViewDecorators;
+        updateUi();
+    }
+
+    private static LinearLayout makeRow(LinearLayout parent) {
+        LinearLayout row = new LinearLayout(parent.getContext());
+        row.setOrientation(HORIZONTAL);
+        parent.addView(row, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+        return row;
     }
 
     public void setWeekDayTextAppearance(int taId) {
@@ -106,7 +122,7 @@ class MonthView extends GridLayout implements View.OnClickListener {
         //If the delta is positive, we want to remove a week
         boolean removeRow = showOtherDates ? delta >= 0 : delta > 0;
         if(removeRow) {
-            delta -= 7;
+            delta -= DEFAULT_DAYS_IN_WEEK;
         }
         tempWorkingCalendar.add(DATE, delta);
         return tempWorkingCalendar;
@@ -150,7 +166,9 @@ class MonthView extends GridLayout implements View.OnClickListener {
         updateUi();
     }
 
-    private void updateUi() {
+
+
+    protected void updateUi() {
         int ourMonth = CalendarUtils.getMonth(calendarOfRecord);
         Calendar calendar = resetAndGetWorkingCalendar();
         for(DayView dayView : monthDayViews) {
@@ -158,9 +176,23 @@ class MonthView extends GridLayout implements View.OnClickListener {
             dayView.setDay(day);
             dayView.setupSelection(showOtherDates, day.isInRange(minDate, maxDate), day.getMonth() == ourMonth);
             dayView.setChecked(day.equals(selection));
+            applyDecorators(dayView,day);
             calendar.add(DATE, 1);
         }
         postInvalidate();
+    }
+
+
+    private void applyDecorators(DayView dayView, CalendarDay day){
+        if(dayViewDecorators != null) {
+            DayViewFacade facade = new DayViewFacade();
+            for(DayViewDecorator decorator : dayViewDecorators){
+                if(decorator.shouldDecorate(day)){
+                    facade.setDayView(dayView);
+                    decorator.decorate(facade);
+                }
+            }
+        }
     }
 
     public void setCallbacks(Callbacks callbacks) {

@@ -1,6 +1,24 @@
 Change Log
 ==========
 
+Version 0.3.1 *(2015-04-23)*
+----------------------------
+
+ * New: Added DayViewDecorator and DayViewFacade to allow for day decorating
+
+Version 0.3.0 *(2015-04-15)*
+----------------------------
+
+ * Change: Namespaced library resources. Everything is now prefixed with `mcv_`
+ * New: Widget resizing is now possible by setting the tileSize
+     * Change: XML layouts are no longer used
+     * Change: Default tile size is now an integer resource
+
+Version 0.2.5 *(2015-03-11)*
+----------------------------
+
+ * New: Customize labels for weekdays and months
+
 Version 0.2.4 *(2015-03-06)*
 ----------------------------
 
